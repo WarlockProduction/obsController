@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        /* Reset de base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Consolas", monospace;
+            font-size: .5rem;
+            color: #ddd;
+        }
+
+        body {
+            background-color: #1c1c1c;
+            /* Gris très foncé */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        div.containImg {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        img {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            box-shadow: 0 0 10px #000;
+            filter: blur(.5rem) brightness(0);
+            transition: .7s;
+        }
+
+        img.hover:hover {
+            filter: blur(0) brightness(1);
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            margin: 5px 0;
+            background-color: #2e2e2e;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #eee;
+            font-size: 1.2rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #5e81ac;
+            /* Bleu OBS */
+            box-shadow: 0 0 8px #5e81ac;
+            background-color: #3b3b3b;
+        }
+
+        input[type="text"].error,
+        input[type="password"].error {
+            background-color: #881111;
+        }
+
+        button {
+            width: 100%;
+            max-width: 400px;
+            padding: 14px 0;
+            margin: 5px 0;
+            background-color: #3b3b3b;
+            border: none;
+            border-radius: 1000px;
+            color: #ddd;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            user-select: none;
+            box-shadow: inset 0 -3px 0 #222;
+        }
+
+        button:hover {
+            background-color: #5e81ac;
+            /* Bleu OBS */
+            box-shadow: 0 0 12px #5e81ac;
+            color: #fff;
+        }
+
+        button:active {
+            background-color: #4b6a99;
+            box-shadow: inset 0 3px 5px #2e3a5a;
+        }
+
+        #password,
+        #passwordHide {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px auto;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            background-color: #2e2e2e;
+            border: 1px solid #555;
+            color: #eee;
+            user-select: all;
+            box-shadow: inset 0 0 5px #000;
+        }
+
+        #connectedView,
+        #disconnectedView {
+            width: 100%;
+            max-width: 440px;
+            background-color: #252525;
+            padding: 30px 20px;
+            border-radius: 16px;
+            box-shadow: 0 0 20px #000 inset;
+            overflow: hidden;
+        }
+
+        p {
+            color: #ccc;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="connectedView" style="display: none;">
+        <div class="containImg">
+            <img src="/qr.png" alt="">
+        </div>
+
+        <input type="text" name="userName" id="userName" placeholder="Votre pseudo">
+
+        <p id="password" style="display: none;">abcd1234</p>
+        <p id="passwordHide">******</p>
+        <button id="passwordShowing" onclick="showPswd()">Show password</button>
+
+        <button onclick="refreshPage()">Refresh</button>
+
+        <button id="regenPswd" onclick="regenPswd()" style="display: none;">Regen password</button>
+    </div>
+    <div id="disconnectedView">
+        <input type="text" name="portObs" id="portObs" placeholder="port of websocket in obs" value="4455">
+        <input type="password" name="pswdObs" id="pswdObs" placeholder="mdp of websocket in obs">
+
+        <button style="margin-top: 30px;" onclick="refreshPage()">Refresh</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        const url = new URL(window.location.href);
+
+        const element_connectedView = document.querySelector('div#connectedView')
+        const element_disconnectedView = document.querySelector('div#disconnectedView')
+
+        const element_passwordShowing = document.querySelector('button#passwordShowing')
+        const element_regenPswd = document.querySelector('button#regenPswd')
+        const element_password = document.querySelector('p#password')
+        const element_passwordHide = document.querySelector('p#passwordHide')
+
+        const element_userName = document.querySelector('input#userName')
+        const element_portObs = document.querySelector('input#portObs')
+        const element_pswdObs = document.querySelector('input#pswdObs')
+
+        const element_images = [...document.querySelectorAll('img')]
+
+        const protocols = ["obswebsocket.json"];
+
+        let obsSocket;
+        let socket;
+        let version;
+        let obsReady = false;
+
+        const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789012345678901234567890123456789"
+        function generateString(l) {
+            var s = ''
+            for (let i = 0; i < l; i++) {
+                s += chars[Math.floor((chars.length * 0.999) * Math.random())]
+            }
+            return s;
+        }
+
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        var pswd = '';
+        function regenPswd() {
+            if (pswdIsShowed) {
+                clearInterval(idOfTimeout)
+                idOfTimeout = setTimeout(() => {
+                    showPswd();
+                }, 10_000)
+            }
+            pswd = generateString(8)
+            element_password.innerText = pswd
+            url.searchParams.set('d', pswd);
+            window.history.pushState({}, '', url);
+
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+            socket.send(JSON.stringify({
+                w: {
+                    Pseudo: element_userName.value,
+                    Password: element_password.innerText,
+                    OBSVersion: version
+                }
+            }))
+        }
+
+        element_images.forEach(img => {
+            img.addEventListener('click', () => {
+                img.classList.toggle('hover');
+            })
+            img.addEventListener('mouseover', () => {
+                img.classList.remove('hover');
+            })
+        })
+
+        element_userName.addEventListener('input', () => {
+            url.searchParams.set('u', element_userName.value || undefined);
+            window.history.pushState({}, '', url);
+            if (!socket) return obsSocket ? connectServerWebSocket() : NaN;
+            socket.send(JSON.stringify({
+                w: {
+                    Pseudo: element_userName.value,
+                    Password: element_password.innerText,
+                    OBSVersion: version
+                }
+            }))
+        })
+        if (url.searchParams.get('u')) element_userName.value = url.searchParams.get('u');
+        element_pswdObs.addEventListener('input', () => {
+            url.searchParams.set('p', element_pswdObs.value || undefined);
+            window.history.pushState({}, '', url);
+        })
+        if (url.searchParams.get('p')) element_pswdObs.value = url.searchParams.get('p');
+        if (url.searchParams.get('d')) element_password.innerText = url.searchParams.get('d');
+        else regenPswd();
+
+        var pswdIsShowed = false;
+        var idOfTimeout = 0;
+        function showPswd() {
+            clearInterval(idOfTimeout)
+            if (pswdIsShowed) {
+                element_passwordShowing.innerText = "Show password"
+                element_regenPswd.style.display = 'none'
+                element_password.style.display = 'none'
+                element_passwordHide.style.display = ''
+            } else {
+                element_passwordShowing.innerText = "Hide password"
+                element_regenPswd.style.display = ''
+                element_password.style.display = ''
+                element_passwordHide.style.display = 'none'
+
+                idOfTimeout = setTimeout(() => {
+                    showPswd();
+                }, 10_000)
+            }
+            pswdIsShowed = !pswdIsShowed;
+        }
+
+        var connectionStartedObs = false;
+        function connectOBSWebSocket() {
+            if (connectionStartedObs) return;
+            connectionStartedObs = true;
+            if (obsSocket && obsSocket.close) obsSocket.close();
+            obsReady = false;
+            const me = new WebSocket("ws://localhost:" + element_portObs.value, protocols);
+            obsSocket = me;
+
+            me.onopen = () => {
+                connectionStartedObs = false;
+                console.log("Connecté à OBS WebSocket");
+                setTimeout(() => {
+                    if (obsSocket !== me) me.close(4999, 'duplication.')
+                })
+            };
+
+            me.onmessage = (event) => {
+                const response = JSON.parse(event.data);
+
+                if (response.d && response.d.authentication) {
+                    const { salt, challenge } = response.d.authentication;
+                    const password = element_pswdObs.value || '1';
+
+                    version = JSON.stringify({
+                        op: 2,
+                        d: {
+                            obsWebSocketVersion: response.d.obsWebSocketVersion,
+                            rpcVersion: response.d.rpcVersion
+                        }
+                    })
+
+                    const secret = CryptoJS.SHA256(password + salt).toString(CryptoJS.enc.Base64);
+                    const auth = CryptoJS.SHA256(secret + challenge).toString(CryptoJS.enc.Base64);
+
+                    me.send(JSON.stringify({
+                        op: 1,
+                        d: {
+                            rpcVersion: 1,
+                            authentication: auth,
+                            clientName: 'Accès via mobile (obs-web)'
+                        }
+                    }));
+                    return;
+                }
+
+                element_connectedView.style.display = '';
+                element_disconnectedView.style.display = 'none';
+                connectServerWebSocket();
+                if (response.d && response.d.obsWebSocketVersion) {
+                    response.op = 2;
+                    version = JSON.stringify(response);
+                }
+
+                if (response.op === 2) {
+                    console.log("Authentifié à OBS WebSocket");
+                    obsReady = true;
+                }
+
+                if (!socket || socket.readyState !== WebSocket.OPEN) return;
+                socket.send(JSON.stringify(response));
+            };
+
+            me.onerror = (error) => {
+                console.error("Erreur WebSocket", error);
+            };
+
+            me.onclose = (event) => {
+                console.warn(`WebSocket OBS fermé : code ${event.code}, raison : "${event.reason}"`);
+                element_connectedView.style.display = 'none';
+                element_disconnectedView.style.display = '';
+                if (socket && socket.close) socket.close(4999, 'Die by obs closing');
+                if (obsSocket === me && event.code !== 4009 && event.code !== 4999) setTimeout(() => connectOBSWebSocket(), 2_000)
+                if (obsSocket === me) obsReady = false;
+                if (obsSocket === me) obsSocket = undefined;
+            };
+        }
+
+        var connectionStartedServer = false;
+        function connectServerWebSocket() {
+            if (connectionStartedServer) return;
+            connectionStartedServer = true;
+            if (socket && socket.close) socket.close();
+            const currentUrl = new URL(url.href)
+            currentUrl.pathname = '/client'
+            currentUrl.search = "";
+            currentUrl.protocol = currentUrl.protocol === 'https' ? 'wss' : 'ws'
+            const me = new WebSocket(currentUrl, protocols);
+            socket = me;
+
+            me.onopen = () => {
+                connectionStartedServer = false;
+                element_userName.classList.remove('error');
+                console.log("Connecté à server WebSocket")
+                setTimeout(() => {
+                    if (socket !== me) me.close(4999, 'duplication.')
+                })
+
+                me.send(JSON.stringify({
+                    w: {
+                        Pseudo: element_userName.value,
+                        Password: element_password.innerText,
+                        OBSVersion: version
+                    }
+                }))
+            };
+
+            me.onmessage = (event) => {
+                const response = JSON.parse(event.data);
+
+                if (!obsSocket || obsSocket.readyState !== WebSocket.OPEN || !obsReady) return;
+                obsSocket.send(JSON.stringify(response))
+            };
+
+            me.onerror = (error) => {
+                console.error("Erreur WebSocket", error);
+            };
+
+            me.onclose = (event) => {
+                console.warn(`WebSocket server fermé : code ${event.code}, raison : "${event.reason}"`);
+                if (socket === me && obsSocket && event.code !== 4009 && event.code !== 4999) setTimeout(() => connectServerWebSocket(), 2_000)
+                if (socket === me) socket = undefined;
+                else if (event.code === 4009) {
+                    element_userName.classList.add('error');
+                }
+            };
+        }
+
+        connectOBSWebSocket();
+        element_pswdObs.addEventListener('input', () => connectOBSWebSocket())
+    </script>
+</body>
+
+</html>

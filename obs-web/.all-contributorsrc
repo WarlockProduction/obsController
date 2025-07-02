@@ -1,0 +1,185 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "verstaerker-583",
+      "name": "verstaerker-583",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/40574338?v=4",
+      "profile": "https://github.com/verstaerker-583",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "crazy4groovy",
+      "name": "crazy4groovy",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/1110812?v=4",
+      "profile": "http://crazy4groovy.blogspot.ca",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "isctylr",
+      "name": "Isaac Taylor",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/24595776?v=4",
+      "profile": "https://github.com/isctylr",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "darthclide",
+      "name": "darthclide",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/46735828?v=4",
+      "profile": "https://github.com/darthclide",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "rodrigograca31",
+      "name": "Rodrigo Graça",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1134310?v=4",
+      "profile": "https://blog.rodrigograca.com/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "feitosa-daniel",
+      "name": "Daniel Feitosa",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1847734?v=4",
+      "profile": "https://github.com/feitosa-daniel",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Arunscape",
+      "name": "Arun Woosaree",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/8227297?v=4",
+      "profile": "http://linkedin.com/in/arun-woosaree",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "avil13",
+      "name": "Aleksey Pivkin",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/1606172?v=4",
+      "profile": "https://avil13.com",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "ndragon798",
+      "name": "Nathan Easton",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10368650?v=4",
+      "profile": "http://www.nathaneaston.com/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "teh-random-name",
+      "name": "Tristan Smith",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3823744?v=4",
+      "profile": "https://www.shortcord.com",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "filiphanes",
+      "name": "Filip Hanes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/33264909?v=4",
+      "profile": "http://filiphanes.sk",
+      "contributions": [
+        "code",
+        "ideas",
+        "design",
+        "bug"
+      ]
+    },
+    {
+      "login": "TotalInternalReflection",
+      "name": "TotalInternalReflection",
+      "avatar_url": "https://avatars.githubusercontent.com/u/49660235?v=4",
+      "profile": "https://github.com/TotalInternalReflection",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "alessionossa",
+      "name": "Alessio Nossa",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17525117?v=4",
+      "profile": "https://www.nossa.me/",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "tt2468",
+      "name": "tt2468",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28720189?v=4",
+      "profile": "https://tt2468.net",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "donahuetech",
+      "name": "donahuetech",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28513975?v=4",
+      "profile": "https://github.com/donahuetech",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "AshwinSatyawan",
+      "name": "AshwinSatyawan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/40487239?v=4",
+      "profile": "https://github.com/AshwinSatyawan",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "ewized",
+      "name": "ewized",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1458852?v=4",
+      "profile": "https://github.com/ewized",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "bzip22",
+      "name": "bzip22",
+      "avatar_url": "https://avatars.githubusercontent.com/u/21367547?v=4",
+      "profile": "https://github.com/bzip22",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "obs-web",
+  "projectOwner": "Niek",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true,
+  "commitConvention": "angular",
+  "commitType": "docs"
+}

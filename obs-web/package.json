@@ -1,0 +1,35 @@
+{
+  "name": "svelte-app",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "rollup -c --bundleConfigAsCjs",
+    "dev": "rollup -c -w --bundleConfigAsCjs",
+    "start": "sirv public --host --port 5000",
+    "lint": "npx standard --fix && npx standard --parser svelte-eslint-parser --plugin svelte '**/*.svelte' --fix"
+  },
+  "devDependencies": {
+    "@fullhuman/postcss-purgecss": "<7",
+    "@mdi/js": "^7.4.47",
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-html": "^1.1.0",
+    "@rollup/plugin-node-resolve": "^16",
+    "@rollup/plugin-terser": "^0.4.4",
+    "bulma": "<1",
+    "compare-versions": "^6.1.1",
+    "eslint-plugin-svelte": "^2.46.1",
+    "mdi-svelte": "^1.1.2",
+    "obs-websocket-js": "^5.0.1",
+    "postcss": "^8.5.3",
+    "rollup": "^4",
+    "rollup-plugin-livereload": "^2.0.5",
+    "rollup-plugin-polyfill-node": "^0.13.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-svelte": "^7.2.0",
+    "sass": "^1.89.0",
+    "standard": "^17.1.2",
+    "svelte": "<5"
+  },
+  "dependencies": {
+    "sirv-cli": "^3"
+  }
+}
