@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        /* Reset de base */
         * {
             margin: 0;
             padding: 0;
@@ -18,7 +17,6 @@
 
         body {
             background-color: #1c1c1c;
-            /* Gris très foncé */
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -96,7 +94,6 @@
 
         button:hover {
             background-color: #5e81ac;
-            /* Bleu OBS */
             box-shadow: 0 0 12px #5e81ac;
             color: #fff;
         }
@@ -121,6 +118,10 @@
             -webkit-user-select: all;
             user-select: all;
             box-shadow: inset 0 0 5px #000;
+        }
+
+        #password {
+            letter-spacing: .1em;
         }
 
         #connectedView,
@@ -153,8 +154,9 @@
         <p id="passwordHide">******</p>
         <button id="passwordShowing" onclick="showPswd()">Show password</button>
         <button id="regenPswd" onclick="regenPswd()" style="display: none;">Regen password ?</button>
-        
+
         <button onclick="refreshPage()">Refresh</button>
+        <button onclick="copyCurrentUrlToClipboard()">Copy current link</button>
     </div>
     <div id="disconnectedView">
         <input type="text" name="portObs" id="portObs" placeholder="port of websocket in obs" value="4455">
@@ -195,6 +197,17 @@
                 s += chars[Math.floor((chars.length * 0.999) * Math.random())]
             }
             return s;
+        }
+
+        function copyCurrentUrlToClipboard() {
+            const currentUrl = window.location.href;
+            navigator.clipboard.writeText(currentUrl)
+                .then(() => {
+                    console.log('URL copiée dans le presse-papier :', currentUrl);
+                })
+                .catch(err => {
+                    console.error('Erreur lors de la copie :', err);
+                });
         }
 
         function refreshPage() {
@@ -269,6 +282,7 @@
 
         var connectionStartedObs = false;
         function connectOBSWebSocket() {
+            if (element_pswdObs.value === '') return
             if (connectionStartedObs) return;
             connectionStartedObs = true;
             if (obsSocket && obsSocket.close) obsSocket.close();
@@ -315,7 +329,6 @@
 
                 element_connectedView.style.display = '';
                 element_disconnectedView.style.display = 'none';
-                if (!socket) connectServerWebSocket();
                 if (response.d && response.d.obsWebSocketVersion) {
                     response.op = 2;
                     version = JSON.stringify(response);
@@ -323,6 +336,7 @@
 
                 if (response.op === 2) {
                     console.log("Authentifié à OBS WebSocket");
+                    connectServerWebSocket();
                     obsReady = true;
                 }
 
