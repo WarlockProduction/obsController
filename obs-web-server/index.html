@@ -89,6 +89,7 @@
             font-size: 1.2rem;
             cursor: pointer;
             transition: background-color 0.2s, box-shadow 0.2s;
+            -webkit-user-select: none;
             user-select: none;
             box-shadow: inset 0 -3px 0 #222;
         }
@@ -117,6 +118,7 @@
             background-color: #2e2e2e;
             border: 1px solid #555;
             color: #eee;
+            -webkit-user-select: all;
             user-select: all;
             box-shadow: inset 0 0 5px #000;
         }
@@ -150,10 +152,9 @@
         <p id="password" style="display: none;">abcd1234</p>
         <p id="passwordHide">******</p>
         <button id="passwordShowing" onclick="showPswd()">Show password</button>
-
+        <button id="regenPswd" onclick="regenPswd()" style="display: none;">Regen password ?</button>
+        
         <button onclick="refreshPage()">Refresh</button>
-
-        <button id="regenPswd" onclick="regenPswd()" style="display: none;">Regen password</button>
     </div>
     <div id="disconnectedView">
         <input type="text" name="portObs" id="portObs" placeholder="port of websocket in obs" value="4455">
@@ -202,12 +203,6 @@
 
         var pswd = '';
         function regenPswd() {
-            if (pswdIsShowed) {
-                clearInterval(idOfTimeout)
-                idOfTimeout = setTimeout(() => {
-                    showPswd();
-                }, 10_000)
-            }
             pswd = generateString(8)
             element_password.innerText = pswd
             url.searchParams.set('d', pswd);
@@ -254,26 +249,23 @@
         else regenPswd();
 
         var pswdIsShowed = false;
-        var idOfTimeout = 0;
         function showPswd() {
-            clearInterval(idOfTimeout)
             if (pswdIsShowed) {
-                element_passwordShowing.innerText = "Show password"
+                element_passwordShowing.style.display = ''
                 element_regenPswd.style.display = 'none'
                 element_password.style.display = 'none'
                 element_passwordHide.style.display = ''
             } else {
-                element_passwordShowing.innerText = "Hide password"
+                element_passwordShowing.style.display = 'none'
                 element_regenPswd.style.display = ''
                 element_password.style.display = ''
                 element_passwordHide.style.display = 'none'
-
-                idOfTimeout = setTimeout(() => {
-                    showPswd();
-                }, 10_000)
             }
             pswdIsShowed = !pswdIsShowed;
         }
+        element_regenPswd.addEventListener('mouseout', () => {
+            if (pswdIsShowed) showPswd();
+        })
 
         var connectionStartedObs = false;
         function connectOBSWebSocket() {
@@ -323,7 +315,7 @@
 
                 element_connectedView.style.display = '';
                 element_disconnectedView.style.display = 'none';
-                connectServerWebSocket();
+                if (!socket) connectServerWebSocket();
                 if (response.d && response.d.obsWebSocketVersion) {
                     response.op = 2;
                     version = JSON.stringify(response);

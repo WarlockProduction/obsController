@@ -82,7 +82,6 @@ function initWs() {
                                 if (!credential) throw new Error();
                                 credential.wsDest.push(clientSocket);
                                 clientSocket.onmessage = event => {
-                                    console.log(event.data)
                                     const data = event.data;
                                     if (!credential?.ws) return;
                                     if (credential.ws.readyState !== WebSocket.OPEN) return;
