@@ -48,7 +48,9 @@
         }
 
         input[type="text"],
-        input[type="password"] {
+        input[type="password"],
+        select,
+        option {
             width: 100%;
             max-width: 400px;
             padding: 12px 16px;
@@ -63,7 +65,9 @@
         }
 
         input[type="text"]:focus,
-        input[type="password"]:focus {
+        input[type="password"]:focus,
+        select:focus,
+        option:focus {
             border-color: #5e81ac;
             /* Bleu OBS */
             box-shadow: 0 0 8px #5e81ac;
@@ -71,7 +75,9 @@
         }
 
         input[type="text"].error,
-        input[type="password"].error {
+        input[type="password"].error,
+        select.error,
+        option.error {
             background-color: #881111;
         }
 
@@ -139,6 +145,16 @@
             color: #ccc;
             margin: 10px 0;
         }
+
+        hr {
+            border-color: #ffffff44;
+            margin: 20px 30%;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 
@@ -157,6 +173,11 @@
 
         <button onclick="refreshPage()">Refresh</button>
         <button onclick="copyCurrentUrlToClipboard()">Copy current link</button>
+
+        <hr>
+        <h1>Backup config</h1>
+        <select name="sources" id="sources"></select>
+        <select name="scenes" id="scenes"></select>
     </div>
     <div id="disconnectedView">
         <input type="text" name="portObs" id="portObs" placeholder="port of websocket in obs" value="4455">
@@ -184,6 +205,14 @@
         const element_images = [...document.querySelectorAll('img')]
 
         const protocols = ["obswebsocket.json"];
+
+        var sources = [];
+        var source;
+        var scenes = [];
+        var scene;
+
+        const element_sources = document.querySelector('select#sources')
+        const element_scenes = document.querySelector('select#scenes')
 
         let obsSocket;
         let socket;
@@ -240,6 +269,21 @@
             })
         })
 
+
+        element_sources.addEventListener('change', () => {
+            url.searchParams.set('s', element_sources.value || undefined);
+            window.history.pushState({}, '', url);
+            source = element_sources.value;
+        })
+        if (url.searchParams.get('s')) source = url.searchParams.get('s');
+
+        element_scenes.addEventListener('change', () => {
+            url.searchParams.set('S', element_scenes.value || undefined);
+            window.history.pushState({}, '', url);
+            scene = element_scenes.value;
+        })
+        if (url.searchParams.get('S')) scene = url.searchParams.get('S');
+
         element_userName.addEventListener('input', () => {
             url.searchParams.set('u', element_userName.value || undefined);
             window.history.pushState({}, '', url);
@@ -253,11 +297,13 @@
             }))
         })
         if (url.searchParams.get('u')) element_userName.value = url.searchParams.get('u');
+
         element_pswdObs.addEventListener('input', () => {
             url.searchParams.set('p', element_pswdObs.value || undefined);
             window.history.pushState({}, '', url);
         })
         if (url.searchParams.get('p')) element_pswdObs.value = url.searchParams.get('p');
+
         if (url.searchParams.get('d')) element_password.innerText = url.searchParams.get('d');
         else regenPswd();
 
@@ -340,6 +386,92 @@
                     obsReady = true;
                 }
 
+                if (response.d && response.d.requestId === "GetInputList-local" && response.d.requestType === "GetInputList") {
+                    sources = response.d.responseData.inputs.filter(e => e.inputKind === "ffmpeg_source").sort((a, b) => a.inputName.localeCompare(b.inputName));
+                    if (!source || !sources.find(e => e.inputUuid === source)) {
+                        source = "";
+                        url.searchParams.delete("s");
+                        window.history.pushState({}, '', url);
+                    }
+
+                    element_sources.innerHTML = `
+                        <option value="" disabled${source === "" ? ' selected' : ''}>Source a détecter:</option>
+                        ${sources.map(e => `
+                            <option value="${e.inputUuid}" ${e.inputUuid === source ? ' selected' : ''}>${e.inputName}</option>
+                        `).join('')}
+                    `
+
+                    if (!scene || scene === "" || !source || source === "") return;
+
+                    obsSocket.send(JSON.stringify({
+                        op: 6,
+                        d: {
+                            requestId: "GetSourceActive-local",
+                            requestType: "GetSourceActive",
+                            requestData: {
+                                sourceUuid: source
+                            }
+                        }
+                    }))
+
+                    return
+                }
+
+                else if (response.d && response.d.requestId === "GetSceneList-local" && response.d.requestType === "GetSceneList") {
+                    scenes = response.d.responseData.scenes.sort((a, b) => b.sceneIndex - a.sceneIndex);
+                    if (!scene || !scenes.find(e => e.sceneUuid === scene)) {
+                        scene = "";
+                        url.searchParams.delete("S");
+                        window.history.pushState({}, '', url);
+                    }
+
+                    element_scenes.innerHTML = `
+                        <option value="" disabled${scene === "" ? ' selected' : ''}>Scène si source crash:</option>
+                        ${scenes.map(e => `
+                            <option value="${e.sceneUuid}" ${e.sceneUuid === scene ? ' selected' : ''}>${e.sceneName}</option>
+                        `).join('')}
+                    `
+
+                    return
+                }
+
+                else if (response.d && response.d.requestId === "GetSourceActive-local" && response.d.requestType === "GetSourceActive") {
+                    if (!response.d.responseData.videoActive) return;
+
+                    obsSocket.send(JSON.stringify({
+                        op: 6,
+                        d: {
+                            requestId: "GetMediaInputStatus-local",
+                            requestType: "GetMediaInputStatus",
+                            requestData: {
+                                inputUuid: source
+                            }
+                        }
+                    }))
+
+                    return
+                }
+
+                else if (response.d && response.d.requestId === "GetMediaInputStatus-local" && response.d.requestType === "GetMediaInputStatus") {
+                    const mediaStatus = response.d.responseData;
+
+                    console.log(mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING", mediaStatus.mediaCursor !== 0, mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0)
+                    if (mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0) return;
+
+                    obsSocket.send(JSON.stringify({
+                        op: 6,
+                        d: {
+                            requestId: "SetCurrentProgramScene-local",
+                            requestType: "SetCurrentProgramScene",
+                            requestData: {
+                                sceneUuid: scene
+                            }
+                        }
+                    }))
+
+                    return
+                }
+
                 if (!socket || socket.readyState !== WebSocket.OPEN) return;
                 socket.send(JSON.stringify(response));
             };
@@ -411,6 +543,29 @@
 
         connectOBSWebSocket();
         element_pswdObs.addEventListener('input', () => connectOBSWebSocket())
+
+        setInterval(() => {
+            if (!obsSocket || obsSocket.readyState !== WebSocket.OPEN || !obsReady) return;
+
+            obsSocket.send(JSON.stringify({
+                op: 6,
+                d: {
+                    requestId: "GetInputList-local",
+                    requestType: "GetInputList",
+                    requestData: {
+                        inputKind: "ffmpeg_source"
+                    }
+                }
+            }))
+
+            obsSocket.send(JSON.stringify({
+                op: 6,
+                d: {
+                    requestId: "GetSceneList-local",
+                    requestType: "GetSceneList"
+                }
+            }))
+        }, 250);
     </script>
 </body>
 
