@@ -39,4 +39,4 @@ services:
 networks:
     net:
         external: true
-        name: DockOBS
+        name: dockobs
