@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  back:
+    container_name: DockOBS_Back
+    volumes:
+      - ./opt:/app
+    entrypoint: ["/bin/sh", "/app/back_run.sh"]
+    restart: unless-stopped
+    networks:
+      - net
+
+  front:
+    container_name: DockOBS_Front
+    volumes:
+      - ./opt:/app
+    entrypoint: ["/bin/sh", "/app/front_run.sh"]
+    depends_on:
+      - back
+    restart: unless-stopped
+    networks:
+      - net
+
+  reverse-proxy:
+    image: nginx:latest
+    container_name: DockOBS_Proxy
+    ports:
+      - "80:80"
+      - "5566:5566"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - front
+      - back
+    restart: unless-stopped
+    networks:
+      - net
+
+networks:
+    net:
+        external: true
+        name: DockOBS
