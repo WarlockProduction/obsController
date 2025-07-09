@@ -212,6 +212,8 @@
         var source;
         var scenes = [];
         var scene;
+        var quittedScene;
+        var isCrashed = false;
 
         const element_sources = document.querySelector('select#sources')
         const element_scenes = document.querySelector('select#scenes')
@@ -434,16 +436,30 @@
                         `).join('')}
                     `
 
+                    quittedScene = response.d.responseData.currentPreviewSceneUuid === scene ? quittedScene : response.d.responseData.currentPreviewSceneUuid;
+                    if (response.d.responseData.currentPreviewSceneUuid === scene) return isCrashed = false;
+
                     return
                 }
 
                 else if (response.d && response.d.requestId === "GetSourceActive-local" && response.d.requestType === "GetSourceActive") {
-                    if (!response.d.responseData.videoActive) return;
+                    if (!response.d.responseData.videoActive) {
+                        return obsSocket.send(JSON.stringify({
+                            op: 6,
+                            d: {
+                                requestId: "GetMediaInputStatus-local2",
+                                requestType: "GetMediaInputStatus",
+                                requestData: {
+                                    inputUuid: source
+                                }
+                            }
+                        }))
+                    }
 
                     obsSocket.send(JSON.stringify({
                         op: 6,
                         d: {
-                            requestId: "GetMediaInputStatus-local",
+                            requestId: "GetMediaInputStatus-local1",
                             requestType: "GetMediaInputStatus",
                             requestData: {
                                 inputUuid: source
@@ -454,12 +470,12 @@
                     return
                 }
 
-                else if (response.d && response.d.requestId === "GetMediaInputStatus-local" && response.d.requestType === "GetMediaInputStatus") {
+                else if (response.d && response.d.requestId === "GetMediaInputStatus-local1" && response.d.requestType === "GetMediaInputStatus") {
                     const mediaStatus = response.d.responseData;
 
-                    console.log(mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING", mediaStatus.mediaCursor !== 0, mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0)
                     if (mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0) return;
 
+                    isCrashed = true;
                     obsSocket.send(JSON.stringify({
                         op: 6,
                         d: {
@@ -467,6 +483,27 @@
                             requestType: "SetCurrentProgramScene",
                             requestData: {
                                 sceneUuid: scene
+                            }
+                        }
+                    }))
+
+                    return
+                }
+
+                else if (response.d && response.d.requestId === "GetMediaInputStatus-local2" && response.d.requestType === "GetMediaInputStatus") {
+                    const mediaStatus = response.d.responseData;
+
+                    if (mediaStatus.mediaState !== "OBS_MEDIA_STATE_PLAYING" || mediaStatus.mediaCursor === 0) return;
+                    if (!isCrashed) return;
+                    isCrashed = false;
+
+                    obsSocket.send(JSON.stringify({
+                        op: 6,
+                        d: {
+                            requestId: "SetCurrentProgramScene-local",
+                            requestType: "SetCurrentProgramScene",
+                            requestData: {
+                                sceneUuid: quittedScene
                             }
                         }
                     }))
