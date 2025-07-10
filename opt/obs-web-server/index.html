@@ -214,6 +214,7 @@
         var scenes = [];
         var scene;
         var sceneLarix;
+        var ProgramScene;
         var isOn = false;
 
         const element_sources = document.querySelector('select#sources')
@@ -432,6 +433,7 @@
 
                 else if (response.d && response.d.requestId === "GetSceneList-local" && response.d.requestType === "GetSceneList") {
                     scenes = response.d.responseData.scenes.sort((a, b) => b.sceneIndex - a.sceneIndex);
+                    ProgramScene = response.d.responseData.currentProgramSceneUuid;
                     if (!scene || !scenes.find(e => e.sceneUuid === scene)) {
                         scene = "";
                         url.searchParams.delete("S");
@@ -465,6 +467,7 @@
 
                     if (mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0) {
                         isOn = false;
+                        if (ProgramScene === sceneLarix) return;
                         obsSocket.send(JSON.stringify({
                             op: 6,
                             d: {
@@ -480,6 +483,7 @@
 
                     if (isOn) return;
                     isOn = true;
+                    if (ProgramScene === scene) return;
                     obsSocket.send(JSON.stringify({
                         op: 6,
                         d: {
