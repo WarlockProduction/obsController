@@ -35,7 +35,7 @@ setInterval(() => {
 function removeThisObsWs(ws: WebSocket) {
     const connected = allWS.find((e) => e.ws === ws);
     if (connected) {
-        console.log("🌐 Déconnexion de l'OBS:", connected.Pseudo);
+        console.log("Déconnexion de l'OBS:", connected.Pseudo);
         for (let i = 0; i < connected.wsDest.length; i++) {
             connected.wsDest[i].close(4011, "Your session has been invalidated.");
         }
@@ -62,12 +62,12 @@ function initWs() {
 
             if (path === "/" && obsParam) {
                 clientSocket.onerror = (err) => {
-                    console.error("⚠️ Erreur côté client :", err);
+                    console.error("Erreur côté client :", err);
                 };
 
                 clientSocket.onclose = (event) => {
                     console.log(
-                        `🛑 WebSocket Client fermé : code ${event.code}, raison : "${event.reason}"`
+                        `WebSocket Client fermé : code ${event.code}, raison : "${event.reason}"`
                     );
                     removeThisToObsWs(clientSocket);
                 };
@@ -80,8 +80,8 @@ function initWs() {
                     return;
                 }
 
-                console.log("🔌 Client connecté");
-                console.log("🌐 Connexion à l'OBS cible:", targetWsUrl);
+                console.log("Client connecté");
+                console.log("Connexion à l'OBS cible:", targetWsUrl);
 
                 const salt = randomBytes(16).toString("base64");
                 const challenge = randomBytes(16).toString("base64");
@@ -99,7 +99,7 @@ function initWs() {
                             const clientAuth = data.d.authentication;
 
                             if (clientAuth === expectedAuth) {
-                                console.log("🔓 Authentification réussie");
+                                console.log("Authentification réussie");
 
                                 const credential = allWS.find((e) => e.Pseudo === targetWsUrl);
                                 if (!credential) throw new Error();
@@ -123,7 +123,7 @@ function initWs() {
 
                                 clientSocket.send(credential.OBSVersion);
                             } else {
-                                console.log("🔒 Authentification échouée");
+                                console.log("Authentification échouée");
                                 clientSocket.close(4009, "Authentication failed.");
                             }
                         }
@@ -146,7 +146,7 @@ function initWs() {
                     })
                 );
             } else if (path === "/client") {
-                console.log("🔌 OBS connecté");
+                console.log("OBS connecté");
 
                 clientSocket.onmessage = (event) => {
                     const data = event.data.toString();
@@ -184,7 +184,7 @@ function initWs() {
                             ws: clientSocket,
                             wsDest: [],
                         });
-                        console.log("🌐 Connexion de l'OBS:", json.w.Pseudo);
+                        console.log("Connexion de l'OBS:", json.w.Pseudo);
 
                         return;
                     }
@@ -218,21 +218,21 @@ function initWs() {
                 };
 
                 clientSocket.onerror = (err) => {
-                    console.error("⚠️ Erreur côté client :", err);
+                    console.error("Erreur côté client :", err);
                 };
 
                 clientSocket.onclose = (event) => {
                     console.log(
-                        `🛑 WebSocket OBS fermé : code ${event.code}, raison : "${event.reason}"`
+                        `WebSocket OBS fermé : code ${event.code}, raison : "${event.reason}"`
                     );
                     removeThisObsWs(clientSocket);
                 };
             } else {
-                console.error("❌ URL de connection invalide");
+                console.error("URL de connection invalide");
                 clientSocket.close(1008, "URL de connection invalide");
             }
         } catch (err) {
-            console.error("❌ Erreur lors du traitement de la connexion :", err);
+            console.error("Erreur lors du traitement de la connexion :", err);
             clientSocket.close(1011, "Erreur serveur");
         }
     });

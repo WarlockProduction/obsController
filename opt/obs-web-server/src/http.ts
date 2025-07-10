@@ -39,7 +39,7 @@ const server = http.createServer((req, res) => {
 const wss = new WebSocketServer({ server });
 
 const PORT = 5566;
-server.listen(PORT, () => {
+server.listen(PORT, "127.0.0.1", () => {
   console.log(`Serveur HTTP & WS en écoute sur http://localhost:${PORT}`);
 });
 

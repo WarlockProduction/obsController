@@ -4,7 +4,7 @@
   "scripts": {
     "build": "rollup -c --bundleConfigAsCjs",
     "dev": "rollup -c -w --bundleConfigAsCjs",
-    "start": "sirv public --host --port 5000",
+    "start": "sirv public --host localhost --port 5000",
     "lint": "npx standard --fix && npx standard --parser svelte-eslint-parser --plugin svelte '**/*.svelte' --fix"
   },
   "devDependencies": {
