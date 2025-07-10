@@ -230,7 +230,8 @@
     address = address || 'pseudo';
     console.log('Connecting to:', address, '- using password:', password);
 
-    const fAddress = `ws://${new URL(document.location.href).hostname}:5566/?obs=${address}`;
+    // const fAddress = `ws://${new URL(document.location.href).hostname}:5566/?obs=${address}`;
+    const fAddress = `ws://${new URL(document.location.href).hostname}/api?obs=${address}`;
     await disconnect();
     try {
       const { obsWebSocketVersion, negotiatedRpcVersion } = await obs.connect(
