@@ -180,6 +180,7 @@
         <h1>Backup config</h1>
         <select name="sources" id="sources"></select>
         <select name="scenes" id="scenes"></select>
+        <select name="scenesLarix" id="scenesLarix"></select>
     </div>
     <div id="disconnectedView">
         <input type="text" name="portObs" id="portObs" placeholder="port of websocket in obs" value="4455">
@@ -212,11 +213,12 @@
         var source;
         var scenes = [];
         var scene;
-        var quittedScene;
-        var isCrashed = false;
+        var sceneLarix;
+        var isOn = false;
 
         const element_sources = document.querySelector('select#sources')
         const element_scenes = document.querySelector('select#scenes')
+        const element_scenesLarix = document.querySelector('select#scenesLarix')
 
         let obsSocket;
         let socket;
@@ -287,6 +289,13 @@
             scene = element_scenes.value;
         })
         if (url.searchParams.get('S')) scene = url.searchParams.get('S');
+
+        element_scenesLarix.addEventListener('change', () => {
+            url.searchParams.set('Sl', element_scenesLarix.value || undefined);
+            window.history.pushState({}, '', url);
+            sceneLarix = element_scenesLarix.value;
+        })
+        if (url.searchParams.get('Sl')) sceneLarix = url.searchParams.get('Sl');
 
         element_userName.addEventListener('input', () => {
             url.searchParams.set('u', element_userName.value || undefined);
@@ -410,10 +419,10 @@
                     obsSocket.send(JSON.stringify({
                         op: 6,
                         d: {
-                            requestId: "GetSourceActive-local",
-                            requestType: "GetSourceActive",
+                            requestId: "GetMediaInputStatus-local",
+                            requestType: "GetMediaInputStatus",
                             requestData: {
-                                sourceUuid: source
+                                inputUuid: source
                             }
                         }
                     }))
@@ -428,54 +437,49 @@
                         url.searchParams.delete("S");
                         window.history.pushState({}, '', url);
                     }
+                    if (!sceneLarix || !scenes.find(e => e.sceneUuid === sceneLarix)) {
+                        sceneLarix = "";
+                        url.searchParams.delete("Sl");
+                        window.history.pushState({}, '', url);
+                    }
 
                     element_scenes.innerHTML = `
-                        <option value="" disabled${scene === "" ? ' selected' : ''}>Scène si source crash:</option>
+                        <option value="" disabled${scene === "" ? ' selected' : ''}>Scène stream principal:</option>
                         ${scenes.map(e => `
                             <option value="${e.sceneUuid}" ${e.sceneUuid === scene ? ' selected' : ''}>${e.sceneName}</option>
                         `).join('')}
                     `
 
-                    quittedScene = response.d.responseData.currentPreviewSceneUuid === scene ? quittedScene : response.d.responseData.currentPreviewSceneUuid;
-                    if (response.d.responseData.currentPreviewSceneUuid === scene) return isCrashed = false;
+                    element_scenesLarix.innerHTML = `
+                        <option value="" disabled${scene === "" ? ' selected' : ''}>Scène caméra téléphone:</option>
+                        ${scenes.map(e => `
+                            <option value="${e.sceneUuid}" ${e.sceneUuid === sceneLarix ? ' selected' : ''}>${e.sceneName}</option>
+                        `).join('')}
+                    `
 
                     return
                 }
 
-                else if (response.d && response.d.requestId === "GetSourceActive-local" && response.d.requestType === "GetSourceActive") {
-                    if (!response.d.responseData.videoActive) {
-                        return obsSocket.send(JSON.stringify({
+                else if (response.d && response.d.requestId === "GetMediaInputStatus-local" && response.d.requestType === "GetMediaInputStatus") {
+                    const mediaStatus = response.d.responseData;
+
+                    if (mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0) {
+                        isOn = false;
+                        obsSocket.send(JSON.stringify({
                             op: 6,
                             d: {
-                                requestId: "GetMediaInputStatus-local2",
-                                requestType: "GetMediaInputStatus",
+                                requestId: "SetCurrentProgramScene-local",
+                                requestType: "SetCurrentProgramScene",
                                 requestData: {
-                                    inputUuid: source
+                                    sceneUuid: sceneLarix
                                 }
                             }
                         }))
+                        return;
                     }
 
-                    obsSocket.send(JSON.stringify({
-                        op: 6,
-                        d: {
-                            requestId: "GetMediaInputStatus-local1",
-                            requestType: "GetMediaInputStatus",
-                            requestData: {
-                                inputUuid: source
-                            }
-                        }
-                    }))
-
-                    return
-                }
-
-                else if (response.d && response.d.requestId === "GetMediaInputStatus-local1" && response.d.requestType === "GetMediaInputStatus") {
-                    const mediaStatus = response.d.responseData;
-
-                    if (mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0) return;
-
-                    isCrashed = true;
+                    if (isOn) return;
+                    isOn = true;
                     obsSocket.send(JSON.stringify({
                         op: 6,
                         d: {
@@ -483,27 +487,6 @@
                             requestType: "SetCurrentProgramScene",
                             requestData: {
                                 sceneUuid: scene
-                            }
-                        }
-                    }))
-
-                    return
-                }
-
-                else if (response.d && response.d.requestId === "GetMediaInputStatus-local2" && response.d.requestType === "GetMediaInputStatus") {
-                    const mediaStatus = response.d.responseData;
-
-                    if (mediaStatus.mediaState !== "OBS_MEDIA_STATE_PLAYING" || mediaStatus.mediaCursor === 0) return;
-                    if (!isCrashed) return;
-                    isCrashed = false;
-
-                    obsSocket.send(JSON.stringify({
-                        op: 6,
-                        d: {
-                            requestId: "SetCurrentProgramScene-local",
-                            requestType: "SetCurrentProgramScene",
-                            requestData: {
-                                sceneUuid: quittedScene
                             }
                         }
                     }))
