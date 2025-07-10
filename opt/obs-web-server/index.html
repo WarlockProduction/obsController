@@ -178,9 +178,10 @@
 
         <hr>
         <h1>Backup config</h1>
-        <select name="sources" id="sources"></select>
-        <select name="scenes" id="scenes"></select>
-        <select name="scenesLarix" id="scenesLarix"></select>
+        <button onclick="toggleAutoMode()" id="toggleAutoMode">Passage en automatique</button>
+        <select name="sources" id="sources" style="display:none;"></select>
+        <select name="scenes" id="scenes" style="display:none;"></select>
+        <select name="scenesLarix" id="scenesLarix" style="display:none;"></select>
     </div>
     <div id="disconnectedView">
         <input type="text" name="portObs" id="portObs" placeholder="port of websocket in obs" value="4455">
@@ -220,11 +221,13 @@
         const element_sources = document.querySelector('select#sources')
         const element_scenes = document.querySelector('select#scenes')
         const element_scenesLarix = document.querySelector('select#scenesLarix')
+        const element_toggleAutoMode = document.querySelector('button#toggleAutoMode')
 
         let obsSocket;
         let socket;
         let version;
         let obsReady = false;
+        let autoMode = false;
 
         const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789012345678901234567890123456789"
         function generateString(l) {
@@ -233,6 +236,14 @@
                 s += chars[Math.floor((chars.length * 0.999) * Math.random())]
             }
             return s;
+        }
+
+        function toggleAutoMode() {
+            autoMode = !autoMode;
+            element_toggleAutoMode.innerHTML = autoMode ? 'Passage en manuel' : 'Passage en automatique'
+            element_sources.style.display = autoMode ? '' : 'none'
+            element_scenes.style.display = autoMode ? '' : 'none'
+            element_scenesLarix.style.display = autoMode ? '' : 'none'
         }
 
         function copyCurrentUrlToClipboard() {
@@ -463,6 +474,7 @@
                 }
 
                 else if (response.d && response.d.requestId === "GetMediaInputStatus-local" && response.d.requestType === "GetMediaInputStatus") {
+                    if (!autoMode) return;
                     const mediaStatus = response.d.responseData;
 
                     if (mediaStatus.mediaState === "OBS_MEDIA_STATE_PLAYING" && mediaStatus.mediaCursor !== 0) {
