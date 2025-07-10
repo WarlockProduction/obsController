@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   back:
+    image: node:latest
     container_name: DockOBS_Back
     volumes:
       - ./opt:/app
@@ -11,6 +12,7 @@ services:
       - net
 
   front:
+    image: node:latest
     container_name: DockOBS_Front
     volumes:
       - ./opt:/app
