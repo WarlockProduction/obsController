@@ -523,7 +523,7 @@
             connectionStartedServer = true;
             if (socket && socket.close) socket.close();
             const currentUrl = new URL(url.href)
-            currentUrl.pathname = '/client'
+            currentUrl.pathname = '/api/client'
             currentUrl.search = "";
             currentUrl.protocol = currentUrl.protocol === 'https' ? 'wss' : 'ws'
             const me = new WebSocket(currentUrl, protocols);
